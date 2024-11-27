@@ -1,0 +1,3 @@
+[submodule "car_scraper"]
+	path = car_scraper
+	url = https://github.com/shangjung1012/car_scraper.git
