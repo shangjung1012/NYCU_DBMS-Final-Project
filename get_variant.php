@@ -17,9 +17,17 @@ if (isset($_GET['variant_id']) && is_numeric($_GET['variant_id'])) {
     $stmt->close();
 
     if ($variant) {
-        echo "<li data-id='" . $variant_id . "'>";
+        echo "<li class='list-group-item d-flex justify-content-between align-items-center' data-id='" . $variant_id . "'>";
         echo htmlspecialchars($variant['brand_name']) . " " . htmlspecialchars($variant['model_name']) . " (" . htmlspecialchars($variant['year']) . ") - " . htmlspecialchars($variant['trim_name']);
-        echo " <button class='remove-btn' data-id='" . $variant_id . "'>移除</button>";
+        
+        // 判斷價格是否為 0
+        if ($variant['price'] == 0) {
+            echo " - 售價未公布";
+        } else {
+            echo " - " . htmlspecialchars($variant['price']) . " 萬";
+        }
+
+        echo "<button class='btn btn-danger btn-sm remove-btn' data-id='" . $variant_id . "'>移除</button>";
         echo "</li>";
     }
 }
