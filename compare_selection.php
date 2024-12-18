@@ -14,15 +14,12 @@ if (!isset($_SESSION['compare_list'])) {
 <head>
     <meta charset="UTF-8">
     <title>汽車比較查詢系統 - 選擇比較車款</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 自訂 CSS -->
     <link rel="stylesheet" href="styles.css">
     <style>
         /* 自訂樣式 */
-        .selection-container {
-            margin: 20px 0;
-        }
-        .compare-list {
-            margin: 20px 0;
-        }
         .compare-list ul {
             list-style-type: none;
             padding: 0;
@@ -33,90 +30,91 @@ if (!isset($_SESSION['compare_list'])) {
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .compare-button {
             padding: 10px 20px;
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .compare-button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
         }
     </style>
 </head>
 <body>
-    <h1>汽車比較查詢系統</h1>
-    <a href="index.php">返回首頁</a>
-    <h2>選擇車款進行比較</h2>
+    <div class="container mt-4">
+        <h1 class="mb-4">汽車比較查詢系統</h1>
+        <a href="index.php" class="btn btn-secondary mb-4">返回首頁</a>
+        <h2>選擇車款進行比較</h2>
 
-    <div class="selection-container">
-        <label for="brand">車廠：</label>
-        <select id="brand">
-            <option value="">-- 選擇車廠 --</option>
-            <?php
-            // 載入所有品牌
-            $sql = "SELECT * FROM brands ORDER BY name ASC";
-            $result = $conn->query($sql);
-            if ($result->num_rows > 0) {
-                while($row = $result->fetch_assoc()) {
-                    echo "<option value='" . $row['id'] . "'>" . htmlspecialchars($row['name']) . "</option>";
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label for="brand" class="form-label">車廠：</label>
+                <select id="brand" class="form-select">
+                    <option value="">-- 選擇車廠 --</option>
+                    <?php
+                    // 載入所有品牌
+                    $sql = "SELECT * FROM brands ORDER BY name ASC";
+                    $result = $conn->query($sql);
+                    if ($result->num_rows > 0) {
+                        while($row = $result->fetch_assoc()) {
+                            echo "<option value='" . $row['id'] . "'>" . htmlspecialchars($row['name']) . "</option>";
+                        }
+                    }
+                    ?>
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label for="series" class="form-label">車系：</label>
+                <select id="series" class="form-select" disabled>
+                    <option value="">-- 選擇車系 --</option>
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label for="model" class="form-label">車款：</label>
+                <select id="model" class="form-select" disabled>
+                    <option value="">-- 選擇車款 --</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <button id="addToCompare" class="btn btn-primary" disabled>加入比較</button>
+        </div>
+
+        <div class="compare-list">
+            <h3>已選擇的車輛（最多四輛）</h3>
+            <ul id="compareList" class="list-group">
+                <?php
+                if (!empty($_SESSION['compare_list'])) {
+                    foreach ($_SESSION['compare_list'] as $variant_id) {
+                        // 獲取車輛詳細資料
+                        $stmt = $conn->prepare("SELECT variants.*, models.model_name, models.year, brands.name as brand_name 
+                                                FROM variants 
+                                                JOIN models ON variants.model_id = models.id 
+                                                JOIN brands ON models.brand_id = brands.id 
+                                                WHERE variants.id = ?");
+                        $stmt->bind_param("i", $variant_id);
+                        $stmt->execute();
+                        $variant = $stmt->get_result()->fetch_assoc();
+                        $stmt->close();
+
+                        echo "<li class='list-group-item d-flex justify-content-between align-items-center' data-id='" . $variant_id . "'>";
+                        echo htmlspecialchars($variant['brand_name']) . " " . htmlspecialchars($variant['model_name']) . " (" . htmlspecialchars($variant['year']) . ") - " . htmlspecialchars($variant['trim_name']);
+                        echo "<button class='btn btn-danger btn-sm remove-btn' data-id='" . $variant_id . "'>移除</button>";
+                        echo "</li>";
+                    }
                 }
-            }
-            ?>
-        </select>
+                ?>
+            </ul>
+            <button id="compareButton" class="btn btn-success mt-3" <?php echo (count($_SESSION['compare_list']) < 1) ? 'disabled' : ''; ?>>開始比較</button>
+        </div>
     </div>
 
-    <div class="selection-container">
-        <label for="series">車系：</label>
-        <select id="series" disabled>
-            <option value="">-- 選擇車系 --</option>
-        </select>
-    </div>
-
-    <div class="selection-container">
-        <label for="model">車款：</label>
-        <select id="model" disabled>
-            <option value="">-- 選擇車款 --</option>
-        </select>
-    </div>
-
-    <div class="selection-container">
-        <button id="addToCompare" class="compare-button" disabled>加入比較</button>
-    </div>
-
-    <div class="compare-list">
-        <h3>已選擇的車輛（最多四輛）</h3>
-        <ul id="compareList">
-            <?php
-            if (!empty($_SESSION['compare_list'])) {
-                foreach ($_SESSION['compare_list'] as $variant_id) {
-                    // 獲取車輛詳細資料
-                    $stmt = $conn->prepare("SELECT variants.*, models.model_name, models.year, brands.name as brand_name 
-                                            FROM variants 
-                                            JOIN models ON variants.model_id = models.id 
-                                            JOIN brands ON models.brand_id = brands.id 
-                                            WHERE variants.id = ?");
-                    $stmt->bind_param("i", $variant_id);
-                    $stmt->execute();
-                    $variant = $stmt->get_result()->fetch_assoc();
-                    $stmt->close();
-
-                    echo "<li data-id='" . $variant_id . "'>";
-                    echo htmlspecialchars($variant['brand_name']) . " " . htmlspecialchars($variant['model_name']) . " (" . htmlspecialchars($variant['year']) . ") - " . htmlspecialchars($variant['trim_name']);
-                    echo " <button class='remove-btn' data-id='" . $variant_id . "'>移除</button>";
-                    echo "</li>";
-                }
-            }
-            ?>
-        </ul>
-        <button id="compareButton" class="compare-button" <?php echo (count($_SESSION['compare_list']) < 1) ? 'disabled' : ''; ?>>開始比較</button>
-    </div>
-
+    <!-- jQuery CDN -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         $(document).ready(function() {
             // 動態載入車系
@@ -136,6 +134,9 @@ if (!isset($_SESSION['compare_list'])) {
                         success: function(response) {
                             $('#series').html(response);
                             $('#series').prop('disabled', false);
+                        },
+                        error: function() {
+                            alert("載入車系時出現錯誤，請稍後再試。");
                         }
                     });
                 }
@@ -156,6 +157,9 @@ if (!isset($_SESSION['compare_list'])) {
                         success: function(response) {
                             $('#model').html(response);
                             $('#model').prop('disabled', false);
+                        },
+                        error: function() {
+                            alert("載入車款時出現錯誤，請稍後再試。");
                         }
                     });
                 }
@@ -204,6 +208,9 @@ if (!isset($_SESSION['compare_list'])) {
                                 success: function(data) {
                                     $('#compareList').append(data);
                                     updateCompareButton();
+                                },
+                                error: function() {
+                                    alert("載入車輛資料時出現錯誤。");
                                 }
                             });
                         } else if (response === 'limit') {
@@ -211,6 +218,9 @@ if (!isset($_SESSION['compare_list'])) {
                         } else if (response === 'exists') {
                             alert("此車款已加入比較列表。");
                         }
+                    },
+                    error: function() {
+                        alert("加入比較時出現錯誤，請稍後再試。");
                     }
                 });
             });
@@ -227,6 +237,9 @@ if (!isset($_SESSION['compare_list'])) {
                             $('li[data-id="' + variantId + '"]').remove();
                             updateCompareButton();
                         }
+                    },
+                    error: function() {
+                        alert("移除車輛時出現錯誤，請稍後再試。");
                     }
                 });
             });

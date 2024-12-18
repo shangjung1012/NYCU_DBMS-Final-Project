@@ -4,7 +4,7 @@ include 'db_connection.php';
 session_start();
 
 if (!isset($_SESSION['compare_list']) || count($_SESSION['compare_list']) < 1) {
-    echo "沒有選擇要比較的車輛。<br><a href='compare_selection.php'>返回選擇頁面</a>";
+    echo "沒有選擇要比較的車輛。";
     exit;
 }
 
@@ -37,48 +37,8 @@ $stmt->close();
 // $_SESSION['compare_list'] = [];
 ?>
 
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <title>汽車比較結果</title>
-    <link rel="stylesheet" href="styles.css">
-    <style>
-        /* 自訂樣式 */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        .back-button {
-            padding: 10px 20px;
-            background-color: #6c757d;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-        .back-button:hover {
-            background-color: #5a6268;
-        }
-    </style>
-</head>
-<body>
-    <h1>汽車比較結果</h1>
-    <a href="compare_selection.php">返回比較選擇頁面</a>
-    <table>
+<?php if (count($variants) > 0): ?>
+    <table class="table table-bordered">
         <thead>
             <tr>
                 <th>品牌</th>
@@ -93,31 +53,21 @@ $stmt->close();
             </tr>
         </thead>
         <tbody>
-            <?php
-            if (count($variants) > 0) {
-                foreach ($variants as $variant) {
-                    echo "<tr>";
-                    echo "<td>" . htmlspecialchars($variant['brand_name']) . "</td>";
-                    echo "<td>" . htmlspecialchars($variant['model_name']) . " (" . htmlspecialchars($variant['year']) . ")</td>";
-                    echo "<td>" . htmlspecialchars($variant['trim_name']) . "</td>";
-                    echo "<td>" . htmlspecialchars($variant['price']) . "</td>";
-                    echo "<td>" . htmlspecialchars($variant['body_type']) . "</td>";
-                    echo "<td>" . htmlspecialchars($variant['engine_cc']) . "</td>";
-                    echo "<td>" . htmlspecialchars($variant['horsepower']) . "</td>";
-                    echo "<td>" . htmlspecialchars($variant['fuel_type']) . "</td>";
-                    echo "<td><a href='" . htmlspecialchars($variant['url']) . "' target='_blank'>查看詳情</a></td>";
-                    echo "</tr>";
-                }
-            } else {
-                echo "<tr><td colspan='9'>沒有選擇的車輛資料</td></tr>";
-            }
-            ?>
+            <?php foreach ($variants as $variant): ?>
+                <tr>
+                    <td><?= htmlspecialchars($variant['brand_name']) ?></td>
+                    <td><?= htmlspecialchars($variant['model_name']) ?> (<?= htmlspecialchars($variant['year']) ?>)</td>
+                    <td><?= htmlspecialchars($variant['trim_name']) ?></td>
+                    <td><?= htmlspecialchars($variant['price']) ?></td>
+                    <td><?= htmlspecialchars($variant['body_type']) ?></td>
+                    <td><?= htmlspecialchars($variant['engine_cc']) ?></td>
+                    <td><?= htmlspecialchars($variant['horsepower']) ?></td>
+                    <td><?= htmlspecialchars($variant['fuel_type']) ?></td>
+                    <td><a href="<?= htmlspecialchars($variant['url']) ?>" target="_blank">查看詳情</a></td>
+                </tr>
+            <?php endforeach; ?>
         </tbody>
     </table>
-    <button class="back-button" onclick="window.location.href='compare_selection.php'">返回比較選擇頁面</button>
-</body>
-</html>
-
-<?php
-$conn->close();
-?>
+<?php else: ?>
+    <p>沒有選擇的車輛資料。</p>
+<?php endif; ?>
