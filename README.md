@@ -2,6 +2,7 @@
 
 git clone --recurse-submodules https://github.com/shangjung1012/NYCU_DBMS-Final-Project.git
 
+```
 CREATE TABLE brands (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL UNIQUE
@@ -30,3 +31,4 @@ CREATE TABLE variants (
   fuel_type VARCHAR(50),
   FOREIGN KEY (model_id) REFERENCES models`(id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
