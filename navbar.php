@@ -1,4 +1,10 @@
 <!-- navbar.php -->
+<?php
+// navbar.php
+if (!isset($current_page)) {
+    $current_page = '';
+}
+?>
 <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
   <div class="container">
     <a class="navbar-brand" href="index.php">汽車比較系統</a>
@@ -17,10 +23,26 @@
         <li class="nav-item">
           <a class="nav-link <?php echo ($current_page == 'brands') ? 'active' : ''; ?>" href="brands.php">所有品牌</a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link <?php echo ($current_page == 'about_us') ? 'active' : ''; ?>" href="about_us.php">關於我們</a>
-        </li>
-        <!-- 移除「聯絡我們」連結 -->
+        <?php if (isset($_SESSION['username'])): ?>
+            <?php if ($_SESSION['role'] === 'admin'): ?>
+                <li class="nav-item">
+                    <a class="nav-link <?php echo ($current_page == 'admin_dashboard') ? 'active' : ''; ?>" href="admin_dashboard.php">管理員後台</a>
+                </li>
+            <?php endif; ?>
+            <li class="nav-item">
+                <a class="nav-link <?php echo ($current_page == 'favorites') ? 'active' : ''; ?>" href="favorites.php">我的最愛</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="logout.php">登出 (<?= htmlspecialchars($_SESSION['username']) ?>)</a>
+            </li>
+        <?php else: ?>
+            <li class="nav-item">
+                <a class="nav-link <?php echo ($current_page == 'login') ? 'active' : ''; ?>" href="login.php">登入</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link <?php echo ($current_page == 'register') ? 'active' : ''; ?>" href="register.php">註冊</a>
+            </li>
+        <?php endif; ?>
       </ul>
     </div>
   </div>

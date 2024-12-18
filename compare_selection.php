@@ -1,7 +1,7 @@
 <?php
 // compare_selection.php
-include 'db_connection.php';
 session_start();
+include 'db_connection.php';
 
 // 初始化比較清單
 if (!isset($_SESSION['compare_list'])) {
@@ -46,13 +46,13 @@ $selected_brand_id = isset($_GET['brand_id']) && is_numeric($_GET['brand_id']) ?
     </style>
 </head>
 <body>
-    <?php include 'navbar.php'; ?> <!-- 引入導航欄 -->
+    <?php include 'navbar.php'; ?>
 
+    <!-- 主要內容 -->
     <div class="container mt-5 pt-5">
         <h1 class="mb-4">選擇車款進行比較</h1>
         <a href="index.php" class="btn btn-secondary mb-4">返回首頁</a>
-        <h2>選擇車輛</h2>
-
+        
         <!-- 品牌、車系、車款選擇 -->
         <div class="row mb-3">
             <div class="col-md-4 mb-3 mb-md-0">
@@ -135,17 +135,17 @@ $selected_brand_id = isset($_GET['brand_id']) && is_numeric($_GET['brand_id']) ?
                         $stmt->close();
 
                         if ($variant) {
-                            echo "<li class='list-group-item d-flex justify-content-between align-items-center' data-id='" . $variant_id . "'>";
+                            echo "<li class='list-group-item d-flex justify-content-between align-items-center' data-id='" . htmlspecialchars($variant_id) . "'>";
                             echo htmlspecialchars($variant['brand_name']) . " " . htmlspecialchars($variant['model_name']) . " (" . htmlspecialchars($variant['year']) . ") - " . htmlspecialchars($variant['trim_name']);
 
                             // 判斷價格是否為 0
                             if ($variant['price'] == 0) {
-                                echo " - 售價未公佈";
+                                echo " - 售價未公布";
                             } else {
                                 echo " - " . htmlspecialchars($variant['price']) . " 萬";
                             }
 
-                            echo "<button class='btn btn-danger btn-sm remove-btn' data-id='" . $variant_id . "'>移除</button>";
+                            echo "<button class='btn btn-danger btn-sm remove-btn' data-id='" . htmlspecialchars($variant_id) . "'>移除</button>";
                             echo "</li>";
                         }
                     }
@@ -166,7 +166,7 @@ $selected_brand_id = isset($_GET['brand_id']) && is_numeric($_GET['brand_id']) ?
         </div>
     </div>
 
-    <!-- Bootstrap JS 和 jQuery -->
+    <!-- jQuery 和 Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -213,11 +213,7 @@ $selected_brand_id = isset($_GET['brand_id']) && is_numeric($_GET['brand_id']) ?
                     $.ajax({
                         url: 'get_models.php',
                         type: 'GET',
-                        data: { 
-                            series_id: seriesId,
-                            min_price: $('#minPrice').val(), // 如果有篩選條件
-                            max_price: $('#maxPrice').val()  // 如果有篩選條件
-                        },
+                        data: { series_id: seriesId },
                         beforeSend: function() {
                             $('#loading').removeClass('d-none');
                         },
@@ -374,7 +370,3 @@ $selected_brand_id = isset($_GET['brand_id']) && is_numeric($_GET['brand_id']) ?
     </script>
 </body>
 </html>
-
-<?php
-$conn->close();
-?>

@@ -1,5 +1,9 @@
 <?php
 // index.php
+session_start();
+
+// 設定當前頁面
+$current_page = 'home';
 ?>
 <!DOCTYPE html>
 <html lang="zh-TW">
