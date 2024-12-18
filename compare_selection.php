@@ -46,6 +46,8 @@ $selected_brand_id = isset($_GET['brand_id']) && is_numeric($_GET['brand_id']) ?
     </style>
 </head>
 <body>
+    <?php include 'navbar.php'; ?> <!-- 引入導航欄 -->
+
     <div class="container mt-5 pt-5">
         <h1 class="mb-4">選擇車款進行比較</h1>
         <a href="index.php" class="btn btn-secondary mb-4">返回首頁</a>

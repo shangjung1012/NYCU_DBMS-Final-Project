@@ -70,6 +70,8 @@ $stmt->close();
     </style>
 </head>
 <body>
+    <?php include 'navbar.php'; ?> <!-- 引入導航欄 -->
+
     <div class="container mt-4">
         <h1 class="mb-4">汽車比較結果</h1>
         <a href="compare_selection.php" class="btn btn-secondary mb-4">返回比較選擇頁面</a>

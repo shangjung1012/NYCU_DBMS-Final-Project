@@ -55,35 +55,7 @@
     </style>
 </head>
 <body>
-    <!-- 導航欄 -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
-      <div class="container">
-        <a class="navbar-brand" href="#">汽車比較系統</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
-                aria-controls="navbarNav" aria-expanded="false" aria-label="切換導航">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-          <ul class="navbar-nav">
-            <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="#">首頁</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="compare_selection.php">開始比較</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="brands.php">所有品牌</a> <!-- 新增的導航連結 -->
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">關於我們</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">聯繫我們</a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
+    <?php include 'navbar.php'; ?> <!-- 引入導航欄 -->
 
     <!-- 英雄區 -->
     <section class="hero">
