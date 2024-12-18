@@ -5,7 +5,7 @@ include 'db_connection.php';
 if (isset($_GET['series_id']) && is_numeric($_GET['series_id'])) {
     $series_id = intval($_GET['series_id']);
 
-    // 假設 "車款" 對應於 "variants" 表中的不同配置
+    // 獲取該車系的所有車款
     $stmt = $conn->prepare("SELECT * FROM variants WHERE model_id = ? ORDER BY price ASC");
     $stmt->bind_param("i", $series_id);
     $stmt->execute();

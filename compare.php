@@ -12,7 +12,7 @@ $variant_ids = array_map('intval', $_SESSION['compare_list']);
 $placeholders = implode(',', array_fill(0, count($variant_ids), '?'));
 
 // 構建查詢
-$query = "SELECT variants.*, models.model_name, brands.name as brand_name 
+$query = "SELECT variants.*, models.model_name, models.year, brands.name as brand_name 
           FROM variants 
           JOIN models ON variants.model_id = models.id 
           JOIN brands ON models.brand_id = brands.id 
@@ -98,7 +98,7 @@ $stmt->close();
                 foreach ($variants as $variant) {
                     echo "<tr>";
                     echo "<td>" . htmlspecialchars($variant['brand_name']) . "</td>";
-                    echo "<td>" . htmlspecialchars($variant['model_name']) . "</td>";
+                    echo "<td>" . htmlspecialchars($variant['model_name']) . " (" . htmlspecialchars($variant['year']) . ")</td>";
                     echo "<td>" . htmlspecialchars($variant['trim_name']) . "</td>";
                     echo "<td>" . htmlspecialchars($variant['price']) . "</td>";
                     echo "<td>" . htmlspecialchars($variant['body_type']) . "</td>";

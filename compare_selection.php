@@ -95,7 +95,7 @@ if (!isset($_SESSION['compare_list'])) {
             if (!empty($_SESSION['compare_list'])) {
                 foreach ($_SESSION['compare_list'] as $variant_id) {
                     // 獲取車輛詳細資料
-                    $stmt = $conn->prepare("SELECT variants.*, models.model_name, brands.name as brand_name 
+                    $stmt = $conn->prepare("SELECT variants.*, models.model_name, models.year, brands.name as brand_name 
                                             FROM variants 
                                             JOIN models ON variants.model_id = models.id 
                                             JOIN brands ON models.brand_id = brands.id 
@@ -106,7 +106,7 @@ if (!isset($_SESSION['compare_list'])) {
                     $stmt->close();
 
                     echo "<li data-id='" . $variant_id . "'>";
-                    echo htmlspecialchars($variant['brand_name']) . " " . htmlspecialchars($variant['model_name']) . " - " . htmlspecialchars($variant['trim_name']);
+                    echo htmlspecialchars($variant['brand_name']) . " " . htmlspecialchars($variant['model_name']) . " (" . htmlspecialchars($variant['year']) . ") - " . htmlspecialchars($variant['trim_name']);
                     echo " <button class='remove-btn' data-id='" . $variant_id . "'>移除</button>";
                     echo "</li>";
                 }
