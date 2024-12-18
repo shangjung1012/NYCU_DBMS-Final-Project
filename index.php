@@ -16,6 +16,9 @@ $result = $conn->query($sql);
 </head>
 <body>
     <h1>汽車比較查詢系統</h1>
+    <!-- 在 index.php 的適當位置添加 -->
+    <a href="compare_selection.php">開始比較</a>
+
     <h2>品牌列表</h2>
     <ul>
         <?php
