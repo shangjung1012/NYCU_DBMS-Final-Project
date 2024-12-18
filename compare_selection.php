@@ -134,18 +134,20 @@ $selected_brand_id = isset($_GET['brand_id']) && is_numeric($_GET['brand_id']) ?
                         $variant = $stmt->get_result()->fetch_assoc();
                         $stmt->close();
 
-                        echo "<li class='list-group-item d-flex justify-content-between align-items-center' data-id='" . $variant_id . "'>";
-                        echo htmlspecialchars($variant['brand_name']) . " " . htmlspecialchars($variant['model_name']) . " (" . htmlspecialchars($variant['year']) . ") - " . htmlspecialchars($variant['trim_name']);
+                        if ($variant) {
+                            echo "<li class='list-group-item d-flex justify-content-between align-items-center' data-id='" . $variant_id . "'>";
+                            echo htmlspecialchars($variant['brand_name']) . " " . htmlspecialchars($variant['model_name']) . " (" . htmlspecialchars($variant['year']) . ") - " . htmlspecialchars($variant['trim_name']);
 
-                        // 判斷價格是否為 0
-                        if ($variant['price'] == 0) {
-                            echo " - 售價未公布";
-                        } else {
-                            echo " - " . htmlspecialchars($variant['price']) . " 萬";
+                            // 判斷價格是否為 0
+                            if ($variant['price'] == 0) {
+                                echo " - 售價未公佈";
+                            } else {
+                                echo " - " . htmlspecialchars($variant['price']) . " 萬";
+                            }
+
+                            echo "<button class='btn btn-danger btn-sm remove-btn' data-id='" . $variant_id . "'>移除</button>";
+                            echo "</li>";
                         }
-
-                        echo "<button class='btn btn-danger btn-sm remove-btn' data-id='" . $variant_id . "'>移除</button>";
-                        echo "</li>";
                     }
                 }
                 ?>

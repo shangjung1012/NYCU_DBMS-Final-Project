@@ -68,7 +68,7 @@ if (isset($_GET['brand_id']) && is_numeric($_GET['brand_id'])) {
     </style>
 </head>
 <body>
-    <?php include 'navbar.php'; ?> <!-- 引入導航欄 -->
+    <?php include 'navbar.php'; ?>
 
     <!-- 主要內容 -->
     <div class="container mt-5 pt-5">
@@ -148,12 +148,6 @@ if (isset($_GET['brand_id']) && is_numeric($_GET['brand_id'])) {
                 var variantId = $(this).data('id');
                 var button = $(this);
 
-                // 檢查是否已達到四輛
-                if ($('.btn-add').not(':disabled').length >= 4) {
-                    alert("最多只能比較四輛車。");
-                    return;
-                }
-
                 // 發送 AJAX 請求加入比較
                 $.ajax({
                     url: 'add_compare.php',
@@ -167,6 +161,7 @@ if (isset($_GET['brand_id']) && is_numeric($_GET['brand_id'])) {
                             alert("最多只能比較四輛車。");
                         } else if (response === 'exists') {
                             alert("此車款已加入比較列表。");
+                            button.removeClass('btn-primary').addClass('btn-success').text('已加入').prop('disabled', true);
                         } else {
                             alert("加入比較時出現未知錯誤。");
                         }
@@ -180,7 +175,3 @@ if (isset($_GET['brand_id']) && is_numeric($_GET['brand_id'])) {
     </script>
 </body>
 </html>
-
-<?php
-$conn->close();
-?>
