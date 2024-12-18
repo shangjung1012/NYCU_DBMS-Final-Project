@@ -7,8 +7,10 @@ session_start();
 if (!isset($_SESSION['compare_list'])) {
     $_SESSION['compare_list'] = [];
 }
-?>
 
+// 獲取 GET 參數中的 brand_id（如果有）
+$selected_brand_id = isset($_GET['brand_id']) && is_numeric($_GET['brand_id']) ? intval($_GET['brand_id']) : '';
+?>
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -16,8 +18,9 @@ if (!isset($_SESSION['compare_list'])) {
     <title>汽車比較查詢系統 - 選擇比較車款</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap" rel="stylesheet">
     <!-- 自訂 CSS -->
-    <link rel="stylesheet" href="styles.css">
     <style>
         /* 自訂樣式 */
         .compare-list ul {
@@ -37,13 +40,16 @@ if (!isset($_SESSION['compare_list'])) {
         .compare-button {
             padding: 10px 20px;
         }
+        .brand-highlight {
+            border: 2px solid #007bff;
+        }
     </style>
 </head>
 <body>
-    <div class="container mt-4">
-        <h1 class="mb-4">汽車比較查詢系統</h1>
+    <div class="container mt-5 pt-5">
+        <h1 class="mb-4">選擇車款進行比較</h1>
         <a href="index.php" class="btn btn-secondary mb-4">返回首頁</a>
-        <h2>選擇車款進行比較</h2>
+        <h2>選擇車輛</h2>
 
         <!-- 品牌、車系、車款選擇 -->
         <div class="row mb-3">
@@ -57,7 +63,9 @@ if (!isset($_SESSION['compare_list'])) {
                     $result = $conn->query($sql);
                     if ($result->num_rows > 0) {
                         while($row = $result->fetch_assoc()) {
-                            echo "<option value='" . $row['id'] . "'>" . htmlspecialchars($row['name']) . "</option>";
+                            // 如果有預設品牌，則選中
+                            $selected = ($row['id'] == $selected_brand_id) ? 'selected' : '';
+                            echo "<option value='" . $row['id'] . "' $selected>" . htmlspecialchars($row['name']) . "</option>";
                         }
                     }
                     ?>
@@ -66,8 +74,23 @@ if (!isset($_SESSION['compare_list'])) {
 
             <div class="col-md-4 mb-3 mb-md-0">
                 <label for="series" class="form-label">車系：</label>
-                <select id="series" class="form-select" disabled>
+                <select id="series" class="form-select" <?php echo ($selected_brand_id ? '' : 'disabled'); ?>>
                     <option value="">-- 選擇車系 --</option>
+                    <?php
+                    // 如果有預設品牌，則載入相應車系
+                    if ($selected_brand_id) {
+                        $stmt = $conn->prepare("SELECT * FROM series WHERE brand_id = ? ORDER BY name ASC");
+                        $stmt->bind_param("i", $selected_brand_id);
+                        $stmt->execute();
+                        $series_result = $stmt->get_result();
+                        if ($series_result->num_rows > 0) {
+                            while($series = $series_result->fetch_assoc()) {
+                                echo "<option value='" . $series['id'] . "'>" . htmlspecialchars($series['name']) . "</option>";
+                            }
+                        }
+                        $stmt->close();
+                    }
+                    ?>
                 </select>
             </div>
 
@@ -75,6 +98,13 @@ if (!isset($_SESSION['compare_list'])) {
                 <label for="model" class="form-label">車款：</label>
                 <select id="model" class="form-select" disabled>
                     <option value="">-- 選擇車款 --</option>
+                    <?php
+                    // 如果有預設品牌和車系，則載入相應車款
+                    if ($selected_brand_id) {
+                        // 這裡假設沒有預設車系，需用戶選擇
+                        // 如果需要預設車系，可以在 URL 中傳遞 series_id
+                    }
+                    ?>
                 </select>
             </div>
         </div>
