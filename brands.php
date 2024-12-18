@@ -72,7 +72,7 @@ session_start();
             // 獲取所有品牌
             $sql = "SELECT * FROM brands ORDER BY name ASC";
             $result = $conn->query($sql);
-    
+
             if ($result->num_rows > 0) {
                 while($brand = $result->fetch_assoc()) {
                     echo "<div class='col-md-3 mb-4'>";
@@ -83,12 +83,12 @@ session_start();
                     if (!file_exists($logoPath)) {
                         $logoPath = "images/brands/default.jpg"; // 預設圖片
                     }
-    
+
                     echo "<img src='" . htmlspecialchars($logoPath) . "' class='card-img-top brand-logo' alt='" . htmlspecialchars($brand['name']) . " Logo'>";
                     echo "<div class='card-body d-flex flex-column'>";
                     echo "<h5 class='card-title'>" . htmlspecialchars($brand['name']) . "</h5>";
                     // echo "<p class='card-text'>" . htmlspecialchars($brand['description']) . "</p>";
-                    echo "<a href='compare_selection.php?brand_id=" . $brand['id'] . "' class='btn btn-primary mt-auto'>選擇品牌</a>";
+                    echo "<a href='brand_cars.php?brand_id=" . $brand['id'] . "' class='btn btn-primary mt-auto'>選擇品牌</a>"; // 修改為 brand_cars.php
                     echo "</div>";
                     echo "</div>";
                     echo "</div>";
