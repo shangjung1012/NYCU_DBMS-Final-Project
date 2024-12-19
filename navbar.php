@@ -43,6 +43,9 @@ if (!isset($current_page)) {
                 <a class="nav-link <?php echo ($current_page == 'register') ? 'active' : ''; ?>" href="register.php">註冊</a>
             </li>
         <?php endif; ?>
+        <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="about_us.php">關於我們</a> <!-- 新增的導航連結 -->
+        </li>
       </ul>
     </div>
   </div>
