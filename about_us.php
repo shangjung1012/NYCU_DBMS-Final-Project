@@ -1,5 +1,12 @@
 <?php
 // about_us.php
+session_start();
+
+// 檢查是否登入
+if (!isset($_SESSION['username'])) {
+    header("Location: login.php");
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="zh-TW">
@@ -53,7 +60,6 @@
                 <img src="images/team.jpg" alt="團隊照片" class="team-photo img-fluid">
             </div>
         </div>
-
 
         <div class="row">
             <div class="col-md-12">
