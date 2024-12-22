@@ -4,10 +4,11 @@
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "car_database";
+$dbname = "car_data";
+$port = 3307; // 新的 MySQL 埠號
 
 // 建立連接
-$conn = new mysqli($servername, $username, $password, $dbname);
+$conn = new mysqli($servername, $username, $password, $dbname, $port);
 
 // 檢查連接
 if ($conn->connect_error) {

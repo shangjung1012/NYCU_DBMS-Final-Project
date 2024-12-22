@@ -1,12 +1,35 @@
 <?php
-// compare_selection.php
 session_start();
 include 'db_connection.php';
 
+// 檢查是否登入且為普通用戶
+if (!isset($_SESSION['username']) || $_SESSION['role'] !== 'user') {
+    header("Location: login.php");
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
 // 初始化比較清單
 if (!isset($_SESSION['compare_list'])) {
     $_SESSION['compare_list'] = [];
 }
+
+// 獲取用戶的最愛車輛
+$stmt = $conn->prepare("SELECT favorites.variant_id, variants.*, models.model_name, models.year, brands.name as brand_name, models.id as model_id, brands.id as brand_id 
+                        FROM favorites 
+                        JOIN variants ON favorites.variant_id = variants.id 
+                        JOIN models ON variants.model_id = models.id 
+                        JOIN brands ON models.brand_id = brands.id 
+                        WHERE favorites.user_id = ?
+                        ORDER BY brands.name ASC, models.model_name ASC, variants.trim_name ASC");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$favorites = [];
+while ($row = $result->fetch_assoc()) {
+    $favorites[] = $row;
+}
+$stmt->close();
 
 // 獲取 GET 參數中的 brand_id（如果有）
 $selected_brand_id = isset($_GET['brand_id']) && is_numeric($_GET['brand_id']) ? intval($_GET['brand_id']) : '';
@@ -107,6 +130,21 @@ $selected_brand_id = isset($_GET['brand_id']) && is_numeric($_GET['brand_id']) ?
                         // 如果需要預設車系，可以在 URL 中傳遞 series_id
                     }
                     ?>
+                </select>
+            </div>
+        </div>
+
+        <!-- 新增最愛車輛下拉選單 -->
+        <div class="row mb-3">
+            <div class="col-md-4 mb-3 mb-md-0">
+                <label for="favoriteCars" class="form-label">我的最愛車輛：</label>
+                <select id="favoriteCars" class="form-select">
+                    <option value="">-- 選擇車輛 --</option>
+                    <?php foreach ($favorites as $car): ?>
+                        <option value="<?= htmlspecialchars($car['variant_id']) ?>" data-brand-id="<?= htmlspecialchars($car['brand_id']) ?>" data-model-id="<?= htmlspecialchars($car['model_id']) ?>">
+                            <?= htmlspecialchars($car['brand_name']) . " " . htmlspecialchars($car['model_name']) . " " . htmlspecialchars($car['year']) . " " . htmlspecialchars($car['trim_name']) ?>
+                        </option>
+                    <?php endforeach; ?>
                 </select>
             </div>
         </div>
@@ -231,6 +269,50 @@ $selected_brand_id = isset($_GET['brand_id']) && is_numeric($_GET['brand_id']) ?
                 }
             });
 
+            // 當選擇我的最愛車輛時，自動選定車廠、車系和車款
+        $('#favoriteCars').change(function() {
+            var selectedOption = $(this).find('option:selected');
+            var brandId = selectedOption.data('brand-id');
+            var modelId = selectedOption.data('model-id');
+            var variantId = selectedOption.val();
+
+            if (brandId) {
+                // 設定車廠選項
+                $('#brand').val(brandId).change();
+
+                // 加載車系
+                $.ajax({
+                    url: 'get_series.php',
+                    type: 'GET',
+                    data: { brand_id: brandId },
+                    success: function(response) {
+                        $('#series').html(response);
+                        $('#series').prop('disabled', false);
+                        $('#series').val(modelId).change();
+
+                        // 加載車款
+                        $.ajax({
+                            url: 'get_models.php',
+                            type: 'GET',
+                            data: { series_id: modelId },
+                            success: function(response) {
+                                $('#model').html(response);
+                                $('#model').prop('disabled', false);
+                                $('#model').val(variantId);
+                                $('#addToCompare').prop('disabled', false);
+                            },
+                            error: function() {
+                                alert("載入車款時出現錯誤，請稍後再試。");
+                            }
+                        });
+                    },
+                    error: function() {
+                        alert("載入車系時出現錯誤，請稍後再試。");
+                    }
+                });
+            }
+        });
+
             // 啟用加入比較按鈕
             $('#model').change(function() {
                 var modelId = $(this).val();
@@ -243,7 +325,7 @@ $selected_brand_id = isset($_GET['brand_id']) && is_numeric($_GET['brand_id']) ?
 
             // 加入比較
             $('#addToCompare').click(function() {
-                var variantId = $('#model').val();
+                var variantId = $('#model').val() || $('#favoriteCars').val();
                 if (!variantId) return;
 
                 // 檢查是否已達到四輛
@@ -365,6 +447,52 @@ $selected_brand_id = isset($_GET['brand_id']) && is_numeric($_GET['brand_id']) ?
             // 開始比較
             $('#compareButton').click(function() {
                 window.location.href = 'compare.php';
+            });
+
+            // 當選擇我的最愛車輛時，啟用加入比較按鈕並自動填入車廠、車系和車款
+            $('#favoriteCars').change(function() {
+                var selectedOption = $(this).find('option:selected');
+                var variantId = selectedOption.val();
+                var brandId = selectedOption.data('brand-id');
+                var modelId = selectedOption.data('model-id');
+
+                if (variantId) {
+                    $('#addToCompare').prop('disabled', false);
+
+                    // 自動填入車廠
+                    $('#brand').val(brandId).change();
+
+                    // 載入車系
+                    $.ajax({
+                        url: 'get_series.php',
+                        type: 'GET',
+                        data: { brand_id: brandId },
+                        success: function(response) {
+                            $('#series').html(response);
+                            $('#series').prop('disabled', false);
+
+                            // 載入車款
+                            $.ajax({
+                                url: 'get_models.php',
+                                type: 'GET',
+                                data: { series_id: seriesId },
+                                success: function(response) {
+                                    $('#model').html(response);
+                                    $('#model').prop('disabled', false);
+                                    $('#model').val(modelId).change();
+                                },
+                                error: function() {
+                                    alert("載入車款時出現錯誤，請稍後再試。");
+                                }
+                            });
+                        },
+                        error: function() {
+                            alert("載入車系時出現錯誤，請稍後再試。");
+                        }
+                    });
+                } else {
+                    $('#addToCompare').prop('disabled', true);
+                }
             });
         });
     </script>
