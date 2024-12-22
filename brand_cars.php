@@ -27,7 +27,7 @@ $stmt->close();
 
 // 處理篩選和排序參數
 $year_filter = isset($_GET['year']) && is_numeric($_GET['year']) ? intval($_GET['year']) : '';
-$sort_order = isset($_GET['sort']) && in_array(strtoupper($_GET['sort']), ['ASC', 'DESC']) ? strtoupper($_GET['sort']) : 'ASC';
+$sort_option = isset($_GET['sort']) ? $_GET['sort'] : '';
 
 // 獲取該品牌的所有車輛，根據篩選和排序
 $sql = "SELECT variants.*, models.model_name, models.year 
@@ -44,7 +44,18 @@ if ($year_filter) {
     $types .= "i";
 }
 
-$sql .= " ORDER BY models.year " . $sort_order . ", models.model_name ASC, variants.trim_name ASC";
+// 添加排序條件
+switch ($sort_option) {
+    case 'price_asc':
+        $sql .= " ORDER BY variants.price ASC";
+        break;
+    case 'price_desc':
+        $sql .= " ORDER BY variants.price DESC";
+        break;
+    default:
+        $sql .= " ORDER BY models.model_name ASC";
+        break;
+}
 
 $stmt = $conn->prepare($sql);
 if ($stmt === false) {
@@ -144,8 +155,10 @@ $conn->close();
             <div class="col-md-4">
                 <label for="sort" class="form-label">排序方式</label>
                 <select id="sort" name="sort" class="form-select">
-                    <option value="ASC" <?= ($sort_order == 'ASC') ? 'selected' : ''; ?>>年份遞增</option>
-                    <option value="DESC" <?= ($sort_order == 'DESC') ? 'selected' : ''; ?>>年份遞減</option>
+                    <option value="year_asc" <?= ($sort_option == 'year_asc') ? 'selected' : ''; ?>>年份遞增</option>
+                    <option value="year_desc" <?= ($sort_option == 'year_desc') ? 'selected' : ''; ?>>年份遞減</option>
+                    <option value="price_asc" <?= ($sort_option == 'price_asc') ? 'selected' : ''; ?>>價格遞增</option>
+                    <option value="price_desc" <?= ($sort_option == 'price_desc') ? 'selected' : ''; ?>>價格遞減</option>
                 </select>
             </div>
             <div class="col-md-4 d-flex align-items-end">
