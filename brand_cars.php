@@ -260,7 +260,8 @@ $conn->close();
                             alert("此車款已加入比較列表。");
                             button.removeClass('btn-primary').addClass('btn-success').text('已加入比較').prop('disabled', true);
                         } else {
-                            alert("加入比較時出現未知錯誤。");
+                            // alert("加入比較時出現未知錯誤。");
+                            alert("請先登入才能進行比較。");
                         }
                     },
                     error: function() {
