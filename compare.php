@@ -85,7 +85,7 @@ foreach ($variants as $variant) {
         }
     </style>
 </head>
-<body>
+<body style="margin-top: 100px;">
     <?php include 'navbar.php'; ?>
 
     <div class="container mt-5">

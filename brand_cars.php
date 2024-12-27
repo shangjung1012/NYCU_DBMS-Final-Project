@@ -52,6 +52,12 @@ switch ($sort_option) {
     case 'price_desc':
         $sql .= " ORDER BY variants.price DESC";
         break;
+    case 'year_asc':
+        $sql .= " ORDER BY models.year ASC";
+        break;
+    case 'year_desc':
+        $sql .= " ORDER BY models.year DESC";
+        break;
     default:
         $sql .= " ORDER BY models.model_name ASC";
         break;
