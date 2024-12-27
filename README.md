@@ -31,7 +31,7 @@ git clone --recurse-submodules https://github.com/shangjung1012/NYCU_DBMS-Final-
 ## 4. 建立和組態資料庫
 ### 創建資料庫
 開啟 phpMyAdmin，登入後選擇 New 建立新的資料庫。
-在 Database name 欄位輸入 car_data，選擇編碼為 utf8mb4_general_ci，點擊 Create。
+在 Database name 欄位輸入 car_database，選擇編碼為 utf8mb4_general_ci，點擊 Create。
 
 ### 創建資料表
 執行以下 SQL 語句來創建所需資料表: http://localhost/phpmyadmin/
