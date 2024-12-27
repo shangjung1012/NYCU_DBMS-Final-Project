@@ -4,7 +4,7 @@
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "car_data";
+$dbname = "car_database";
 $port = 3306; // 新的 MySQL 埠號
 
 // 建立連接
