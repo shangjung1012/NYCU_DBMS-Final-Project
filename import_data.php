@@ -5,7 +5,7 @@
 $servername = "localhost";
 $username = "root"; // XAMPP 默認用戶名
 $password = "";     // XAMPP 默認無密碼
-$dbname = "car_data";
+$dbname = "car_database";
 $port = 3306; // 新的 MySQL 埠號
 
 // 建立連接
