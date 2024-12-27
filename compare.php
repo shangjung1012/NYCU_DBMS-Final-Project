@@ -1,4 +1,4 @@
-<?php
+<?php 
 // compare.php
 include 'db_connection.php';
 session_start();
@@ -33,6 +33,27 @@ while($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
+// 准备图表数据
+$chartData = [];
+foreach ($variants as $variant) {
+    $horsepower = $variant['horsepower'];
+
+    // Extract the numeric part for chart purposes
+    if (preg_match('/^(\d+)/', $horsepower, $matches)) {
+        $parsedHorsepower = (int)$matches[1];
+    } else {
+        $parsedHorsepower = null; // Handle cases where no valid number is present
+    }
+
+    $chartData[] = [
+        'name' => htmlspecialchars($variant['model_name']),
+        'price' => (int)$variant['price'],
+        'engine' => (int)$variant['engine_cc'],
+        'horsepower' => $parsedHorsepower,
+        'horsepowerRaw' => htmlspecialchars($horsepower), // Full value for display
+    ];
+}
+
 // 清空比較列表
 // $_SESSION['compare_list'] = [];
 ?>
@@ -44,10 +65,8 @@ $stmt->close();
     <title>汽車比較結果</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- 自訂 CSS -->
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* 自訂樣式 */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -64,17 +83,16 @@ $stmt->close();
         tr:hover {
             background-color: #f1f3f5;
         }
-        .back-button {
-            padding: 10px 20px;
-        }
     </style>
 </head>
 <body>
-    <?php include 'navbar.php'; ?> <!-- 引入導航欄 -->
+    <?php include 'navbar.php'; ?>
 
-    <div class="container mt-5 pt-5">
+    <div class="container mt-5">
         <h1 class="mb-4">汽車比較結果</h1>
         <a href="compare_selection.php" class="btn btn-secondary mb-4">返回比較選擇頁面</a>
+
+        <!-- Comparison Table -->
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
@@ -91,42 +109,98 @@ $stmt->close();
                     </tr>
                 </thead>
                 <tbody>
-                    <?php
-                    if (count($variants) > 0) {
-                        foreach ($variants as $variant) {
-                            echo "<tr>";
-                            echo "<td>" . htmlspecialchars($variant['brand_name']) . "</td>";
-                            echo "<td>" . htmlspecialchars($variant['model_name']) . "</td>";
-                            echo "<td>" . htmlspecialchars($variant['year']) . "</td>";
-                            echo "<td>" . htmlspecialchars($variant['trim_name']) . "</td>";
-                            
-                            // 處理價格為 0 的情況
-                            if ($variant['price'] == 0) {
-                                echo "<td>售價未公布</td>";
-                            } else {
-                                echo "<td>" . htmlspecialchars($variant['price']) . "</td>";
-                            }
-                            
-                            echo "<td>" . htmlspecialchars($variant['body_type']) . "</td>";
-                            echo "<td>" . htmlspecialchars($variant['engine_cc']) . "</td>";
-                            echo "<td>" . htmlspecialchars($variant['horsepower']) . "</td>";
-                            echo "<td>" . htmlspecialchars($variant['fuel_type']) . "</td>";
-                            echo "</tr>";
-                        }
-                    } else {
-                        echo "<tr><td colspan='9'>沒有選擇的車輛資料</td></tr>";
-                    }
-                    ?>
+                    <?php if (count($variants) > 0): ?>
+                        <?php foreach ($variants as $variant): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($variant['brand_name']); ?></td>
+                                <td><?= htmlspecialchars($variant['model_name']); ?></td>
+                                <td><?= htmlspecialchars($variant['year']); ?></td>
+                                <td><?= htmlspecialchars($variant['trim_name']); ?></td>
+                                <td><?= $variant['price'] == 0 ? '售價未公布' : htmlspecialchars($variant['price']); ?></td>
+                                <td><?= htmlspecialchars($variant['body_type']); ?></td>
+                                <td><?= htmlspecialchars($variant['engine_cc']); ?></td>
+                                <td><?= htmlspecialchars($variant['horsepower']); ?></td>
+                                <td><?= htmlspecialchars($variant['fuel_type']); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr><td colspan="9">沒有選擇的車輛資料</td></tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
+        </div>
+
+        <!-- Chart.js Visualization -->
+        <div class="row mt-5">
+            <div class="col-md-4">
+                <h2>價格 (萬)</h2>
+                <canvas id="priceChart"></canvas>
+            </div>
+            <div class="col-md-4">
+                <h2>引擎排氣量 (cc)</h2>
+                <canvas id="engineChart"></canvas>
+            </div>
+            <div class="col-md-4">
+                <h2>馬力</h2>
+                <canvas id="horsepowerChart"></canvas>
+            </div>
         </div>
     </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Prepare chart data
+        const chartData = <?= json_encode($chartData); ?>;
+
+        // Create Separate Bar Charts
+        function createBarChart(ctx, label, data, color) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.map(car => car.name),
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        backgroundColor: color,
+                        borderColor: color,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Generate Bar Charts
+        createBarChart(
+            document.getElementById('priceChart'),
+            '價格 (萬)',
+            chartData.map(car => car.price),
+            'rgba(75, 192, 192, 0.6)'
+        );
+        createBarChart(
+            document.getElementById('engineChart'),
+            '引擎排氣量 (cc)',
+            chartData.map(car => car.engine),
+            'rgba(192, 75, 192, 0.6)'
+        );
+        createBarChart(
+            document.getElementById('horsepowerChart'),
+            '馬力',
+            chartData.map(car => car.horsepower),
+            'rgba(192, 192, 75, 0.6)'
+        );
+    </script>
 </body>
 </html>
 
-<?php
-$conn->close();
-?>
+<?php $conn->close(); ?>
