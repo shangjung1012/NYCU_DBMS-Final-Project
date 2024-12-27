@@ -132,17 +132,20 @@ foreach ($variants as $variant) {
 
         <!-- Chart.js Visualization -->
         <div class="row mt-5">
+            <!-- Left Column for Bar Charts -->
             <div class="col-md-4">
                 <h2>價格 (萬)</h2>
                 <canvas id="priceChart"></canvas>
-            </div>
-            <div class="col-md-4">
                 <h2>引擎排氣量 (cc)</h2>
                 <canvas id="engineChart"></canvas>
-            </div>
-            <div class="col-md-4">
                 <h2>馬力</h2>
                 <canvas id="horsepowerChart"></canvas>
+            </div>
+
+            <!-- Right Column for Radar Chart -->
+            <div class="col-md-8">
+                <h2>綜合性能比較</h2>
+                <canvas id="radarChart"></canvas>
             </div>
         </div>
     </div>
@@ -199,6 +202,66 @@ foreach ($variants as $variant) {
             chartData.map(car => car.horsepower),
             'rgba(192, 192, 75, 0.6)'
         );
+
+        // Radar Chart Data Preparation
+        const radarLabels = ['價格 (萬)', '引擎排氣量 (cc)', '馬力'];
+        const radarData = chartData.map(car => ({
+            label: car.name,
+            data: [car.price, car.engine, car.horsepower],
+        }));
+
+        const maxValues = {
+            price: Math.max(...chartData.map(car => car.price)),
+            engine: Math.max(...chartData.map(car => car.engine)),
+            horsepower: Math.max(...chartData.map(car => car.horsepower))
+        };
+
+        const normalizedData = chartData.map(car => ({
+            label: car.name,
+            data: [
+                car.price / maxValues.price,
+                car.engine / maxValues.engine,
+                car.horsepower / maxValues.horsepower
+            ]
+        }));
+
+        // Create Radar Chart
+        new Chart(document.getElementById('radarChart'), {
+            type: 'radar',
+            data: {
+                labels: ['價格 (萬)', '引擎排氣量 (cc)', '馬力'],
+                datasets: normalizedData.map((car, index) => ({
+                    label: car.label,
+                    data: car.data,
+                    backgroundColor: `rgba(${(index * 50) % 255}, ${(index * 100) % 255}, ${(index * 150) % 255}, 0.2)`,
+                    borderColor: `rgba(${(index * 50) % 255}, ${(index * 100) % 255}, ${(index * 150) % 255}, 1)`,
+                    borderWidth: 1,
+                })),
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                },
+                scales: {
+                    r: {
+                        ticks: {
+                            beginAtZero: true,
+                            callback: function (value) {
+                                return (value * 100).toFixed(0) + '%'; // Show values as percentages
+                            }
+                        },
+                        pointLabels: {
+                            font: {
+                                size: 14
+                            }
+                        }
+                    }
+                },
+            },
+        });
     </script>
 </body>
 </html>
