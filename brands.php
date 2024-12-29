@@ -53,7 +53,7 @@ session_start();
                     // 假設每個品牌有一個 logo 圖片，存放在 'images/brands/' 目錄，文件名為 brand_id.png
                     $logoPath = "images/brands/" . $brand['id'] . ".png";
                     if (!file_exists($logoPath)) {
-                        $logoPath = "images/brands/default.jpg"; // 預設圖片
+                        $logoPath = "images/brands/default.png"; // 預設圖片
                     }
 
                     echo "<img src='" . htmlspecialchars($logoPath) . "' class='card-img-top brand-logo' alt='" . htmlspecialchars($brand['name']) . " Logo'>";

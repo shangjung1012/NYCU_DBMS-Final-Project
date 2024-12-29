@@ -239,8 +239,8 @@ $conn->close();
                     </div>
                     <div class="mb-3">
                         <label for="brand_image" class="form-label">品牌圖片</label>
-                        <input type="file" class="form-control" id="brand_image" name="brand_image" accept="image/*" required>
-                        <div class="form-text">請上傳品牌圖片（JPG, PNG, GIF）。</div>
+                        <input type="file" class="form-control" id="brand_image" name="brand_image" accept="image/png" required>
+                        <div class="form-text">請上傳品牌圖片（僅限 PNG 格式）。</div>
                     </div>
                     <button type="submit" class="btn btn-primary">新增品牌</button>
                 </form>
