@@ -14,6 +14,14 @@ include 'db_connection.php';
 $error = '';
 $success = '';
 
+// 設定分頁參數
+$per_page_options = [10, 20, 50];
+$per_page = isset($_GET['per_page']) && in_array(intval($_GET['per_page']), $per_page_options) ? intval($_GET['per_page']) : 10;
+$page = isset($_GET['page']) && is_numeric($_GET['page']) && intval($_GET['page']) > 0 ? intval($_GET['page']) : 1;
+
+// 計算 OFFSET
+$offset = ($page - 1) * $per_page;
+
 // 處理新增、編輯和刪除車輛
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'add') {
@@ -49,8 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 } else {
                     $error = "新增車型時出錯: " . $stmt_insert_model->error;
                     $stmt_insert_model->close();
-                    $conn->close();
-                    // 顯示錯誤訊息並終止腳本
+                    // 不需要關閉連接，因為後續還有可能操作
                     header("Location: manage_vehicles.php?error=" . urlencode($error));
                     exit();
                 }
@@ -121,8 +128,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 } else {
                     $error = "新增車型時出錯: " . $stmt_insert_model->error;
                     $stmt_insert_model->close();
-                    $conn->close();
-                    // 顯示錯誤訊息並終止腳本
                     header("Location: manage_vehicles.php?error=" . urlencode($error));
                     exit();
                 }
@@ -160,6 +165,30 @@ if ($result_brands->num_rows > 0) {
 // 獲取選擇的品牌ID（如果有）
 $selected_brand_id = isset($_GET['brand_id']) && is_numeric($_GET['brand_id']) ? intval($_GET['brand_id']) : 0;
 
+// 計算總車輛數量
+if ($selected_brand_id > 0) {
+    $stmt_count = $conn->prepare("SELECT COUNT(*) as total FROM variants 
+                                   JOIN models ON variants.model_id = models.id 
+                                   JOIN brands ON models.brand_id = brands.id 
+                                   WHERE brands.id = ?");
+    $stmt_count->bind_param("i", $selected_brand_id);
+} else {
+    $stmt_count = $conn->prepare("SELECT COUNT(*) as total FROM variants 
+                                   JOIN models ON variants.model_id = models.id 
+                                   JOIN brands ON models.brand_id = brands.id");
+}
+
+$stmt_count->execute();
+$result_count = $stmt_count->get_result();
+$total = 0;
+if ($row = $result_count->fetch_assoc()) {
+    $total = intval($row['total']);
+}
+$stmt_count->close();
+
+// 計算總頁數
+$total_pages = ceil($total / $per_page);
+
 // 獲取所有車輛（如果有選擇品牌，則只顯示該品牌下的車輛）
 $vehicles = [];
 if ($selected_brand_id > 0) {
@@ -168,14 +197,17 @@ if ($selected_brand_id > 0) {
                                      JOIN models ON variants.model_id = models.id 
                                      JOIN brands ON models.brand_id = brands.id 
                                      WHERE brands.id = ?
-                                     ORDER BY models.model_name ASC, variants.trim_name ASC");
-    $stmt_vehicles->bind_param("i", $selected_brand_id);
+                                     ORDER BY models.model_name ASC, variants.trim_name ASC 
+                                     LIMIT ? OFFSET ?");
+    $stmt_vehicles->bind_param("iii", $selected_brand_id, $per_page, $offset);
 } else {
     $stmt_vehicles = $conn->prepare("SELECT variants.*, models.model_name, models.year, brands.id as brand_id, brands.name as brand_name 
                                      FROM variants 
                                      JOIN models ON variants.model_id = models.id 
                                      JOIN brands ON models.brand_id = brands.id 
-                                     ORDER BY brands.name ASC, models.model_name ASC, variants.trim_name ASC");
+                                     ORDER BY brands.name ASC, models.model_name ASC, variants.trim_name ASC 
+                                     LIMIT ? OFFSET ?");
+    $stmt_vehicles->bind_param("ii", $per_page, $offset);
 }
 
 $stmt_vehicles->execute();
@@ -208,6 +240,22 @@ $conn->close();
         }
         .table-responsive {
             margin-top: 20px;
+        }
+        .pagination {
+            justify-content: center;
+        }
+        /* 自訂 active 分頁按鈕的樣式 */
+        .pagination .page-item.active .page-link {
+            background-color: #343a40; /* 深灰色背景 */
+            border-color: #343a40; /* 深灰色邊框 */
+            color: #ffffff; /* 白色文字 */
+        }
+
+        /* 當滑鼠懸停在 active 分頁按鈕上時保持樣式 */
+        .pagination .page-item.active .page-link:hover {
+            background-color: #343a40;
+            border-color: #343a40;
+            color: #ffffff;
         }
     </style>
 </head>
@@ -244,6 +292,16 @@ $conn->close();
                             <?php foreach ($brands as $brand): ?>
                                 <option value="<?= htmlspecialchars($brand['id']) ?>" <?= ($brand['id'] === $selected_brand_id) ? 'selected' : ''; ?>>
                                     <?= htmlspecialchars($brand['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="per_page" class="form-label">每頁顯示筆數</label>
+                        <select class="form-select" id="per_page" name="per_page" onchange="this.form.submit()">
+                            <?php foreach ($per_page_options as $option): ?>
+                                <option value="<?= $option ?>" <?= ($per_page === $option) ? 'selected' : ''; ?>>
+                                    <?= $option ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -366,12 +424,48 @@ $conn->close();
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="10" class="text-center">目前沒有任何車輛資料。</td>
+                            <td colspan="9" class="text-center">目前沒有任何車輛資料。</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
             </table>
         </div>
+        
+        <!-- 分頁導航 -->
+        <?php if ($total_pages > 1): ?>
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    <!-- 上一頁 -->
+                    <li class="page-item <?= ($page <= 1) ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => $page - 1])) ?>" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    
+                    <!-- 頁碼 -->
+                    <?php
+                    // 顯示最多 5 個頁碼，並根據當前頁碼調整
+                    $max_links = 5;
+                    $start = max(1, $page - floor($max_links / 2));
+                    $end = min($total_pages, $start + $max_links - 1);
+                    if ($end - $start + 1 < $max_links) {
+                        $start = max(1, $end - $max_links + 1);
+                    }
+                    for ($i = $start; $i <= $end; $i++): ?>
+                        <li class="page-item <?= ($i === $page) ? 'active' : ''; ?>">
+                            <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => $i])) ?>"><?= $i ?></a>
+                        </li>
+                    <?php endfor; ?>
+                    
+                    <!-- 下一頁 -->
+                    <li class="page-item <?= ($page >= $total_pages) ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => $page + 1])) ?>" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        <?php endif; ?>
         
         <!-- 編輯車輛模態框 -->
         <div class="modal fade" id="editVehicleModal" tabindex="-1" aria-labelledby="editVehicleModalLabel" aria-hidden="true">
