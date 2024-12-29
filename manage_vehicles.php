@@ -20,8 +20,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $trim_name = trim($_POST['trim_name']);
         $price = floatval($_POST['price']);
         $body_type = trim($_POST['body_type']);
-        $engine_cc = floatval($_POST['engine_cc']);
-        $horsepower = floatval($_POST['horsepower']);
+        $engine_cc = trim($_POST['engine_cc']);
+        $horsepower = trim($_POST['horsepower']);
+        
         $fuel_type = trim($_POST['fuel_type']);
         
         // 插入或查詢車型
@@ -42,27 +43,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
         $stmt->close();
         
-        // 新增車輛
         $stmt_insert_variant = $conn->prepare("INSERT INTO variants (model_id, trim_name, price, body_type, engine_cc, horsepower, fuel_type) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt_insert_variant->bind_param("isdssds", $model_id, $trim_name, $price, $body_type, $engine_cc, $horsepower, $fuel_type);
-        $stmt_insert_variant->execute();
-        $stmt_insert_variant->close();
+        $stmt_insert_variant->bind_param("isdssss", $model_id, $trim_name, $price, $body_type, $engine_cc, $horsepower, $fuel_type);
         
-        // 重定向避免表單重複提交
-        header("Location: manage_vehicles.php");
-        exit();
+        if ($stmt_insert_variant->execute()) {
+            // 成功新增車輛
+            $stmt_insert_variant->close();
+            header("Location: manage_vehicles.php?success=1");
+            exit();
+        } else {
+            // 新增失敗，顯示錯誤訊息
+            $error = "新增車輛時出錯: " . $stmt_insert_variant->error;
+            $stmt_insert_variant->close();
+        }
     } elseif ($_POST['action'] === 'delete' && isset($_POST['variant_id'])) {
         $variant_id = intval($_POST['variant_id']);
         
         // 刪除車輛
         $stmt = $conn->prepare("DELETE FROM variants WHERE id = ?");
         $stmt->bind_param("i", $variant_id);
-        $stmt->execute();
-        $stmt->close();
-        
-        // 重定向
-        header("Location: manage_vehicles.php");
-        exit();
+        if ($stmt->execute()) {
+            // 成功刪除車輛
+            $stmt->close();
+            header("Location: manage_vehicles.php?success=2");
+            exit();
+        } else {
+            // 刪除失敗，顯示錯誤訊息
+            $error = "刪除車輛時出錯: " . $stmt->error;
+            $stmt->close();
+        }
     }
 }
 
@@ -77,13 +86,13 @@ if ($result_brands->num_rows > 0) {
 }
 
 // 獲取所有車輛
+$vehicles = [];
 $sql_vehicles = "SELECT variants.*, models.model_name, models.year, brands.name as brand_name 
                 FROM variants 
                 JOIN models ON variants.model_id = models.id 
                 JOIN brands ON models.brand_id = brands.id 
                 ORDER BY brands.name ASC, models.model_name ASC, variants.trim_name ASC";
 $result_vehicles = $conn->query($sql_vehicles);
-$vehicles = [];
 if ($result_vehicles->num_rows > 0) {
     while ($row = $result_vehicles->fetch_assoc()) {
         $vehicles[] = $row;
@@ -122,6 +131,20 @@ $conn->close();
     
     <div class="container mt-5 pt-5">
         <h1 class="mb-4">管理車輛</h1>
+        
+        <!-- 顯示成功訊息 -->
+        <?php if (isset($_GET['success'])): ?>
+            <?php if ($_GET['success'] == 1): ?>
+                <div class="alert alert-success">車輛已成功新增。</div>
+            <?php elseif ($_GET['success'] == 2): ?>
+                <div class="alert alert-success">車輛已成功刪除。</div>
+            <?php endif; ?>
+        <?php endif; ?>
+        
+        <!-- 顯示錯誤訊息 -->
+        <?php if (isset($error)): ?>
+            <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+        <?php endif; ?>
         
         <!-- 新增車輛表單 -->
         <div class="card mb-4">
@@ -162,11 +185,13 @@ $conn->close();
                     </div>
                     <div class="mb-3">
                         <label for="engine_cc" class="form-label">引擎排氣量 (cc)</label>
-                        <input type="number" class="form-control" id="engine_cc" name="engine_cc" min="0" step="0.1" required>
+                        <!-- 修改輸入類型為 text，允許輸入字串 -->
+                        <input type="text" class="form-control" id="engine_cc" name="engine_cc" required>
                     </div>
                     <div class="mb-3">
                         <label for="horsepower" class="form-label">馬力</label>
-                        <input type="number" class="form-control" id="horsepower" name="horsepower" min="0" step="0.1" required>
+                        <!-- 修改輸入類型為 text，允許輸入字串 -->
+                        <input type="text" class="form-control" id="horsepower" name="horsepower" required>
                     </div>
                     <div class="mb-3">
                         <label for="fuel_type" class="form-label">燃料類型</label>
@@ -208,13 +233,16 @@ $conn->close();
                                 <td><?= ($vehicle['price'] == 0) ? '售價未公布' : htmlspecialchars($vehicle['price']) ?></td>
                                 
                                 <td><?= htmlspecialchars($vehicle['body_type']) ?></td>
+                                <!-- *** 修改部分開始 *** -->
+                                <!-- 引擎排氣量和馬力作為字串顯示 -->
                                 <td><?= htmlspecialchars($vehicle['engine_cc']) ?></td>
                                 <td><?= htmlspecialchars($vehicle['horsepower']) ?></td>
+                                <!-- *** 修改部分結束 *** -->
                                 <td><?= htmlspecialchars($vehicle['fuel_type']) ?></td>
                                 
                                 <td>
                                     <!-- 刪除按鈕 -->
-                                    <form method="POST" action="manage_vehicles.php" onsubmit="return confirm('確定要刪除此車輛嗎？');">
+                                    <form method="POST" action="manage_vehicles.php" style="display:inline;" onsubmit="return confirm('確定要刪除此車輛嗎？');">
                                         <input type="hidden" name="action" value="delete">
                                         <input type="hidden" name="variant_id" value="<?= htmlspecialchars($vehicle['id']) ?>">
                                         <button type="submit" class="btn btn-danger btn-sm">刪除</button>
