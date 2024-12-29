@@ -14,12 +14,14 @@ if (!isset($current_page)) {
     </button>
     <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
       <ul class="navbar-nav">
+        <?php if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin'): ?>
         <li class="nav-item">
           <a class="nav-link <?php echo ($current_page == 'home') ? 'active' : ''; ?>" href="index.php">首頁</a>
         </li>
         <li class="nav-item">
           <a class="nav-link <?php echo ($current_page == 'compare') ? 'active' : ''; ?>" href="compare_selection.php">開始比較</a>
         </li>
+        <?php endif; ?>
         <li class="nav-item">
           <a class="nav-link <?php echo ($current_page == 'brands') ? 'active' : ''; ?>" href="brands.php">所有品牌</a>
         </li>
@@ -28,10 +30,11 @@ if (!isset($current_page)) {
                 <li class="nav-item">
                     <a class="nav-link <?php echo ($current_page == 'admin_dashboard') ? 'active' : ''; ?>" href="admin_dashboard.php">管理員後台</a>
                 </li>
+            <?php else: ?>
+                <li class="nav-item">
+                    <a class="nav-link <?php echo ($current_page == 'favorites') ? 'active' : ''; ?>" href="favorites.php">我的最愛</a>
+                </li>
             <?php endif; ?>
-            <li class="nav-item">
-                <a class="nav-link <?php echo ($current_page == 'favorites') ? 'active' : ''; ?>" href="favorites.php">我的最愛</a>
-            </li>
             <li class="nav-item">
                 <a class="nav-link" href="logout.php">登出 (<?= htmlspecialchars($_SESSION['username']) ?>)</a>
             </li>
